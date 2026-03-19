@@ -1,0 +1,99 @@
+# OpenSfM configuration tuned for Insta360 equirectangular footage
+# captured on a 3-metre telescopic "selfie stick" during a lawnmower
+# survey of a 20 × 20 m field plot.
+#
+# Reference: https://opensfm.readthedocs.io/en/latest/using.html
+
+# ---------------------------------------------------------------------------
+# Feature detection
+# ---------------------------------------------------------------------------
+
+# HAHOG is robust under the strong radial distortion typical of
+# equirectangular projections and performs well in vegetated scenes.
+feature_type: HAHOG
+
+# Increase feature count to cope with repetitive vegetation texture.
+feature_min_frames: 4000
+
+# Use L2 normalised descriptors (better for HAHOG).
+hahog_normalize_to_uchar: true
+
+# ---------------------------------------------------------------------------
+# Matching
+# ---------------------------------------------------------------------------
+
+# FLANN is fast for large numbers of features.
+matcher_type: FLANN
+
+# Match every frame against its N nearest temporal neighbours AND all
+# pairs within the same "lawnmower lane".  High overlap → more ties.
+matching_gps_distance: 6        # metres – match images within 6 m
+matching_gps_neighbors: 8       # also always match the 8 nearest shots by GPS distance
+
+# Keep all matches; we have high overlap so the geometric filter is tight.
+lowes_ratio: 0.75
+min_inliers_ratio: 0.3
+
+# ---------------------------------------------------------------------------
+# Camera model
+# ---------------------------------------------------------------------------
+
+# Insta360 produces equirectangular (lat/lon sphere) images.
+# Set to "equirectangular" so OpenSfM uses the correct projection.
+camera_type: equirectangular
+
+# ---------------------------------------------------------------------------
+# Reconstruction
+# ---------------------------------------------------------------------------
+
+# Run incremental reconstruction (most robust for irregular overlap).
+reconstruction_algorithm: incremental
+
+# Allow up to 5 resections per iteration; useful for gap-bridging.
+resection_inliers: 10
+resection_threshold: 0.005
+
+# Bundle-adjustment iterations.
+bundle_max_iterations: 100
+
+# Outlier-removal threshold (pixels).
+bundle_outlier_threshold: 2.0
+
+# ---------------------------------------------------------------------------
+# Dense reconstruction (optional: produce a dense point cloud)
+# ---------------------------------------------------------------------------
+
+# Algorithm: patch-match stereo on equirectangular pairs.
+depthmap_method: PATCH_MATCH_SAMPLE
+
+# Minimum number of views for depth fusion – 3 reduces holes in
+# occluded areas caused by vegetation.
+depthmap_min_consistent_views: 3
+
+# Target GSD ≈ 5 cm; the lawnmower walk at 3 m altitude gives
+# ground resolution of ~5-10 cm per pixel at 5.7 K.
+depthmap_resolution: 640
+
+# ---------------------------------------------------------------------------
+# Orthophoto / undistortion
+# ---------------------------------------------------------------------------
+
+# Generate an orthographic projection of the dense cloud (GSD ~ 5 cm).
+orthophoto_resolution: 5  # cm/pixel
+
+# ---------------------------------------------------------------------------
+# Processes
+# ---------------------------------------------------------------------------
+
+# Parallelism – set to the number of available logical CPU cores.
+processes: 4
+
+# ---------------------------------------------------------------------------
+# GCP (Ground Control Points)
+# ---------------------------------------------------------------------------
+
+# GCPs are stored in <project>/gcp_list.txt (OpenSfM format).
+# Use the mark_gcps script to create this file interactively.
+use_altitude_tag: false
+align_method: orientation_prior
+align_orientation_prior: vertical
